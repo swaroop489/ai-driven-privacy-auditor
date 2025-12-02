@@ -1,36 +1,73 @@
 ```
 frontend/
+│
+├── public/
+│   ├── index.html
+│   ├── favicon.ico
+│   ├── manifest.json
+│   └── robots.txt
+│
 ├── src/
+│   ├── App.jsx
+│   ├── main.jsx
+│   ├── index.css
+│   │
+│   ├── assets/
+│   │   ├── logo.svg
+│   │   ├── empty-state.png
+│   │   └── banner.jpg
+│   │
 │   ├── components/
-│   │   ├── UploadForm.jsx
-│   │   ├── FilePreview.jsx
-│   │   ├── ViolationList.jsx
-│   │   └── Navbar.jsx
+│   │   ├── Navbar.jsx
+│   │   ├── Sidebar.jsx
+│   │   ├── FileUpload.jsx
+│   │   ├── FileCard.jsx
+│   │   ├── ViolationItem.jsx
+│   │   ├── StatsCard.jsx
+│   │   ├── Table.jsx
+│   │   └── Loader.jsx
 │   │
 │   ├── pages/
+│   │   ├── Home.jsx
+│   │   ├── Login.jsx
+│   │   ├── Register.jsx
 │   │   ├── UserDashboard.jsx
 │   │   ├── AdminDashboard.jsx
-│   │   ├── Login.jsx
-│   │   └── Register.jsx
-│   │
-│   ├── services/
-│   │   ├── api.js                # Axios API wrapper
-│   │   ├── authService.js
-│   │   └── uploadService.js
+│   │   ├── AuditReports.jsx
+│   │   └── NotFound.jsx
 │   │
 │   ├── context/
 │   │   ├── AuthContext.jsx
 │   │   └── AlertContext.jsx
 │   │
-│   ├── utils/
-│   │   └── constants.js
+│   ├── services/
+│   │   ├── api.js                  # Axios config
+│   │   ├── authService.js          # Login/register/logout
+│   │   ├── uploadService.js        # Upload files/text
+│   │   ├── auditService.js         # Get flagged results
+│   │   └── reportService.js        # Admin analytics
 │   │
-│   ├── App.jsx
-│   └── main.jsx
-│
-├── public/
-│   └── index.html
+│   ├── hooks/
+│   │   ├── useAuth.js
+│   │   ├── useAlert.js
+│   │   └── useFetch.js
+│   │
+│   ├── utils/
+│   │   ├── constants.js
+│   │   └── formatDate.js
+│   │
+│   ├── styles/
+│   │   ├── global.css
+│   │   ├── dashboard.css
+│   │   ├── form.css
+│   │   └── navbar.css
+│   │
+│   └── router/
+│       ├── AppRouter.jsx
+│       └── ProtectedRoute.jsx
 │
 ├── package.json
-└── vite.config.js
+├── vite.config.js
+└── README.md
+
 ```
