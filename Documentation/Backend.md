@@ -1,43 +1,62 @@
 ```
 backend/
+│
 ├── src/
-│   ├── config/
-│   │   ├── db.js                 # MongoDB Atlas connection
-│   │   ├── aws.js                # AWS SDK (S3, Lambda) config
-│   │   └── env.js                # Environment variables
+│   ├── app.js                         # Express app setup
+│   ├── server.js                      # App entry point
 │   │
-│   ├── controllers/
-│   │   ├── uploadController.js   # Handles file/text uploads
-│   │   ├── auditController.js    # Communicates with NLP/OCR microservices
-│   │   ├── reportController.js   # Admin analytics, flagged users
-│   │   └── userController.js     # Authentication, roles
+│   ├── config/
+│   │   ├── db.js                      # MongoDB Atlas connection
+│   │   ├── aws.js                     # AWS SDK + S3 config
+│   │   ├── cloudRun.js                # Cloud Run API URLs
+│   │   └── env.js                     # Environment variable loader
 │   │
 │   ├── models/
-│   │   ├── User.js
-│   │   ├── Upload.js
-│   │   ├── AuditLog.js
-│   │   └── Violation.js
+│   │   ├── User.js                    # Schema: username, email, password, role
+│   │   ├── Upload.js                  # Schema: fileURL, userID, auditStatus
+│   │   ├── Violation.js               # Schema: type, detectedText, severity
+│   │   └── AuditLog.js                # Schema: userID, action, timestamp
+│   │
+│   ├── controllers/
+│   │   ├── userController.js          # Login, register, JWT token issue
+│   │   ├── uploadController.js        # File/text upload
+│   │   ├── auditController.js         # Call NLP/OCR microservices
+│   │   ├── reportController.js        # Admin dashboard data
+│   │   └── alertController.js         # Email/notification alerts
 │   │
 │   ├── routes/
-│   │   ├── uploadRoutes.js
-│   │   ├── auditRoutes.js
-│   │   ├── adminRoutes.js
-│   │   └── userRoutes.js
+│   │   ├── userRoutes.js              # /api/users/
+│   │   ├── uploadRoutes.js            # /api/uploads/
+│   │   ├── auditRoutes.js             # /api/audit/
+│   │   ├── reportRoutes.js            # /api/reports/
+│   │   └── adminRoutes.js             # /api/admin/
 │   │
 │   ├── middlewares/
-│   │   ├── authMiddleware.js
-│   │   ├── errorHandler.js
-│   │   └── s3Upload.js           # Handles file upload to AWS S3
+│   │   ├── authMiddleware.js          # Verify JWT, roles
+│   │   ├── errorHandler.js            # Global error handling
+│   │   └── s3Upload.js                # Upload middleware for S3
 │   │
 │   ├── services/
-│   │   ├── nlpService.js         # Calls NLP Cloud Run microservice
-│   │   ├── ocrService.js         # Calls OCR Cloud Run microservice
-│   │   ├── emailService.js       # Sends alerts if violations
-│   │   └── auditService.js       # Business logic for detection
+│   │   ├── nlpService.js              # Communicate with NLP Cloud Run
+│   │   ├── ocrService.js              # Communicate with OCR Cloud Run
+│   │   ├── auditService.js            # Aggregates results, flags content
+│   │   ├── emailService.js            # Sends admin alerts
+│   │   └── logService.js              # Writes to AuditLog collection
 │   │
-│   ├── app.js                    # Express app
-│   └── server.js                 # Entry point
+│   ├── utils/
+│   │   ├── regexPatterns.js           # Backup regex for phone, ID, etc.
+│   │   ├── constants.js               # App constants (thresholds, roles)
+│   │   ├── responseHelper.js          # Consistent API responses
+│   │   └── logger.js                  # Winston or console logger
+│   │
+│   └── tests/
+│       ├── user.test.js
+│       ├── upload.test.js
+│       └── audit.test.js
 │
 ├── package.json
-└── .env
+├── .env
+├── .eslintrc.json
+└── README.md
+
 ```
