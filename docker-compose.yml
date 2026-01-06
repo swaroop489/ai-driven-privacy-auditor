@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=5000
+      - MONGO_URI=${MONGO_URI}
+      - NLP_SERVICE_URL=${NLP_SERVICE_URL}
+      - OCR_SERVICE_URL=${OCR_SERVICE_URL}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - mongo
+      - nlp-service
+      - ocr-service
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:5000/api}
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  nlp-service:
+    build: ./ai-services/nlp-service
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./ai-services/nlp-service:/app
+
+  ocr-service:
+    build: ./ai-services/ocr-service
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./ai-services/ocr-service:/app
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
