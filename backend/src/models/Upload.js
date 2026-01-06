@@ -1,32 +1,37 @@
+```javascript
 // auth middleware
 
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const mongoose = require('mongoose');
 
-const protect = async (req, res, next) => {
-  let token;
+const uploadSchema = mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User',
+    },
+    inputType: {
+        type: String,
+        enum: ['TEXT', 'IMAGE', 'TEXT_IMAGE'],
+        required: true,
+    },
+    fileUrl: {
+        type: String, // Store S3 URL if uploaded
+    },
+    action: {
+        type: String,
+        enum: ['ALLOW', 'WARN', 'BLOCK'],
+        required: true,
+    },
+    violationCount: {
+        type: Number,
+        required: true,
+        default: 0,
+    },
+}, {
+    timestamps: true,
+});
 
-  if (req.headers.authorization?.startsWith("Bearer ")) {
-    token = req.headers.authorization.split(" ")[1];
-  }
+const Upload = mongoose.model('Upload', uploadSchema);
 
-  if (!token) {
-    return res.status(401).json({ message: "Not authorized, no token" });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.user = await User.findById(decoded.id).select("-password");
-
-    if (!req.user) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: "Not authorized, token failed" });
-  }
-};
-
-module.exports = { protect };
+module.exports = Upload;
+```
