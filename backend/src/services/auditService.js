@@ -26,7 +26,7 @@ function decideAction(v) {
   return ACTIONS.ALLOW;
 }
 
-async function auditContent({ text, image, userId }) {
+async function auditContent({ text, image, userId, fileUrl }) {
   let violations = [];
   let inputType = "TEXT";
 
@@ -63,7 +63,8 @@ async function auditContent({ text, image, userId }) {
     user: userId,
     inputType,
     action: finalAction,
-    violationCount: processed.length
+    violationCount: processed.length,
+    fileUrl: fileUrl || undefined
   });
 
   if (processed.length > 0) {
