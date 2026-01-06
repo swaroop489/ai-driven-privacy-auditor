@@ -34,7 +34,7 @@ const Navbar = () => {
                     </>
                 ) : (
                     <>
-                        <button onClick={() => navigate('/upload')} className="hidden md:block px-5 py-2 text-sm font-medium bg-gradient-to-r from-teal-500 to-indigo-600 text-white rounded-full hover:shadow-lg hover:shadow-teal-500/25 transition-all transform hover:-translate-y-0.5">
+                        <button onClick={() => navigate('/dashboard')} className="hidden md:block px-5 py-2 text-sm font-medium bg-gradient-to-r from-teal-500 to-indigo-600 text-white rounded-full hover:shadow-lg hover:shadow-teal-500/25 transition-all transform hover:-translate-y-0.5">
                             Internal System
                         </button>
 

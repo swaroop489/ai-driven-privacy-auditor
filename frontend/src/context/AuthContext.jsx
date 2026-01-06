@@ -31,6 +31,9 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
             if (response.ok) {
                 localStorage.setItem('user', JSON.stringify(data));
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                }
                 setUser(data);
                 return { success: true };
             } else {
@@ -53,6 +56,9 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
             if (response.ok) {
                 localStorage.setItem('user', JSON.stringify(data));
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                }
                 setUser(data);
                 return { success: true };
             } else {
@@ -65,6 +71,7 @@ export const AuthProvider = ({ children }) => {
 
     const logout = () => {
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
         setUser(null);
     };
 

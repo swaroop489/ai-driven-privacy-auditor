@@ -13,11 +13,15 @@ async function analyzeImage(file) {
     contentType: file.mimetype
   });
 
-  const response = await axios.post(OCR_SERVICE_URL, form, {
-    headers: form.getHeaders()
-  });
-
-  return response.data;
+  try {
+    const response = await axios.post(OCR_SERVICE_URL, form, {
+      headers: form.getHeaders()
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`OCR Service Error: ${error.message} (URL: ${OCR_SERVICE_URL})`);
+    throw new Error(`OCR Service failed: ${error.response?.data?.detail || error.message}`);
+  }
 }
 
 module.exports = {

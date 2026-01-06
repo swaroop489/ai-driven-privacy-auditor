@@ -1,37 +1,33 @@
-```javascript
-// auth middleware
-
 const mongoose = require('mongoose');
 
 const uploadSchema = mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User',
-    },
-    inputType: {
-        type: String,
-        enum: ['TEXT', 'IMAGE', 'TEXT_IMAGE'],
-        required: true,
-    },
-    fileUrl: {
-        type: String, // Store S3 URL if uploaded
-    },
-    action: {
-        type: String,
-        enum: ['ALLOW', 'WARN', 'BLOCK'],
-        required: true,
-    },
-    violationCount: {
-        type: Number,
-        required: true,
-        default: 0,
-    },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'User',
+  },
+  inputType: {
+    type: String,
+    enum: ['TEXT', 'IMAGE', 'TEXT_IMAGE'],
+    required: true,
+  },
+  fileUrl: {
+    type: String, // Store S3 URL if uploaded
+  },
+  action: {
+    type: String,
+    enum: ['ALLOW', 'WARN', 'BLOCK'],
+    required: true,
+  },
+  violationCount: {
+    type: Number,
+    required: true,
+    default: 0,
+  },
 }, {
-    timestamps: true,
+  timestamps: true,
 });
 
 const Upload = mongoose.model('Upload', uploadSchema);
 
 module.exports = Upload;
-```
