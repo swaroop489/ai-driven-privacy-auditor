@@ -6,8 +6,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download spaCy model explicitly
-RUN python -m spacy download en_core_web_sm
+# Note: Model is installed via requirements.txt, so manual download step is removed
 
 # Copy app code
 COPY . .
