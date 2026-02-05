@@ -2,10 +2,12 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies for Tesseract
-RUN apt-get update && apt-get install -y \
+# Install runtime dependencies for Tesseract
+# --no-install-recommends keeps it small (no docs, extra langs)
+# tesseract-ocr-eng ensures English support is present
+RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
-    libtesseract-dev \
+    tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies
