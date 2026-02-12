@@ -25,6 +25,9 @@ const Navbar = () => {
             <div className="flex gap-4 items-center">
                 {!user ? (
                     <>
+                        <button onClick={() => navigate('/admin/login')} className="hidden md:block px-4 py-2 text-sm font-medium text-slate-500 hover:text-teal-600 transition-colors">
+                            Admin
+                        </button>
                         <button onClick={() => navigate('/login')} className="hidden md:block px-4 py-2 text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors">
                             Log In
                         </button>
@@ -34,8 +37,11 @@ const Navbar = () => {
                     </>
                 ) : (
                     <>
-                        <button onClick={() => navigate('/dashboard')} className="hidden md:block px-5 py-2 text-sm font-medium bg-gradient-to-r from-teal-500 to-indigo-600 text-white rounded-full hover:shadow-lg hover:shadow-teal-500/25 transition-all transform hover:-translate-y-0.5">
-                            Internal System
+                        <button
+                            onClick={() => navigate(user.role === 'admin' ? '/admin' : '/dashboard')}
+                            className="hidden md:block px-5 py-2 text-sm font-medium bg-gradient-to-r from-teal-500 to-indigo-600 text-white rounded-full hover:shadow-lg hover:shadow-teal-500/25 transition-all transform hover:-translate-y-0.5"
+                        >
+                            {user.role === 'admin' ? 'Admin Panel' : 'Internal System'}
                         </button>
 
                         <div className="relative">

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import AdminLogin from '../pages/AdminLogin';
 import { AuthProvider } from '../context/AuthContext';
 
 import UserDashboard from '../pages/UserDashboard';
@@ -25,6 +26,8 @@ const AppRouter = () => {
                             <UserDashboard />
                         </ProtectedRoute>
                     } />
+
+                    <Route path="/admin/login" element={<AdminLogin />} />
 
                     {/* Protected Admin Routes - Assuming Logic inside AdminDashboard or extra checks */}
                     <Route path="/admin" element={
