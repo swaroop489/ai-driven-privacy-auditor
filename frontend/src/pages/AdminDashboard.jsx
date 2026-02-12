@@ -12,8 +12,10 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user && user.role !== 'admin') {
-            navigate('/dashboard'); // Redirect non-admins
+        if (!user || user.role !== 'admin') {
+            // If not logged in or not admin, redirect.
+            // If not logged in, AuthContext usually handles it, but double check here.
+            navigate('/admin/login');
             return;
         }
 
@@ -101,8 +103,8 @@ const AdminDashboard = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded text-xs font-bold ${v.severity === 'HIGH' ? 'bg-red-500/10 text-red-400' :
-                                                    v.severity === 'MEDIUM' ? 'bg-yellow-500/10 text-yellow-400' :
-                                                        'bg-green-500/10 text-green-400'
+                                                v.severity === 'MEDIUM' ? 'bg-yellow-500/10 text-yellow-400' :
+                                                    'bg-green-500/10 text-green-400'
                                                 }`}>
                                                 {v.severity}
                                             </span>

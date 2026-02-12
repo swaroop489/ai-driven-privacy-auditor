@@ -9,7 +9,7 @@ const Sidebar = () => {
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
+        navigate('/admin/login'); // Redirect to admin login for better UX
     };
 
     const navItems = [
