@@ -4,3 +4,6 @@ venv
 
 __pycache__/
 *.pyc
+
+scripts/make_admin_docker.js
+scripts/make_admin.js
