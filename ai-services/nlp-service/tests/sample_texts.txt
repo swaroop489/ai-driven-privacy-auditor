@@ -1,0 +1,10 @@
+1. My Aadhar number is 1234 5678 9012.
+2. Please verify PAN ABCDE1234F for tax purposes.
+3. Call me on +91 9876543210.
+4. My email address is rahul.sharma@gmail.com.
+5. Transfer money to rahul123@oksbi.
+6. The voter ID ABC1234567 is registered in Pune.
+7. Send the documents via courier. (Negative Case)
+8. Bank IFSC code is SBIN0001234.
+9. Passport number A1234567 expires in 2030.
+10. Driving license MH-01-2020-0012345 is suspended.
