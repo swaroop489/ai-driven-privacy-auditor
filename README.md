@@ -33,70 +33,53 @@ This leads to:
 
 We built an **AI-powered privacy auditor** that:
 
-### 🧠 1. Uses NLP to scan text for sensitive info  
-Detects:
-- Phone numbers  
-- Emails  
-- Addresses  
-- IDs (Aadhar/PAN)  
-- GPS-like text  
+### 🤖 1. Custom-Trained Indian PII NER Engine
+- **Beyond Regex:** Uses a fine-tuned spaCy NER (Named Entity Recognition) model.
+- **Specialized Detection:** Recognizes 9+ India-specific entities (Aadhar, PAN, Voter ID, Passport, IFSC, DL, UPI IDs).
+- **Comprehensive Scans:** Detects:
+  - 📱 **Phone numbers** (Indian format support)
+  - 📧 **Emails** (Personal & Official)
+  - 📍 **Locations** (GPE & Local)
+  - 🪪 **Financial IDs** (PAN, Aadhar, IFSC)
+  - 💳 **Digital IDs** (UPI ID, Voter ID, Passport)
 
-### 📷 2. Uses OCR to extract text from images  
-Handles:
-- Photos of ID cards  
-- Screenshots  
-- Documents  
-- Photos with embedded text  
+### 📷 2. Image PII Extraction (OCR)
+- Uses **Tesseract OCR** to extract text from image uploads (ID cards, screenshots, documents).
+- Automatically scans extracted text for sensitive privacy violations using our hybrid engine.
 
-### 🛡️ 3. Automatically flags violations  
-- Categorizes severity  
-- Logs the violations  
-- Alerts admins  
-- Prevents posting when high-risk PII is detected  
+### 🛡️ 3. Real-time Flagging & Redaction
+- **Categorizes severity:** BLOCK (High Risk), WARN (Medium), ALLOW (Low).
+- **Asynchronous Logging:** Logs every violation for administrative review.
+- **Masking:** Automatically redacts PII in the UI (e.g., `XXXX XXXX 9012`).
 
-### ☁️ 4. Runs fully on AWS  
-- AWS S3 for file uploads  
-- AWS Lambda microservices for NLP & OCR  
-- API Gateway for routing  
-- IAM for security  
-- CloudWatch for monitoring  
-- MongoDB Atlas for data storage  
+### ☁️ 4. Event-Driven AWS Architecture
+- **S3 Triggers:** Uploading a document to an S3 bucket automatically invokes a Lambda scan.
+- **Serverless Scaling:** Uses **Containerized Lambdas** to handle large AI models efficiently without extra server load.
+- **Infrastructure as Code:** Fully managed via **Terraform** for reproducible deployments.
 
 ---
 
 # 🏗️ 3. System Architecture
 
+```mermaid
+graph TD
+    User([User]) -->|Uploads File| S3[(AWS S3 Bucket)]
+    S3 -->|S3 Event Trigger| Lambda[AWS Lambda: PII Scanner]
+    Lambda -->|Download File| S3
+    Lambda -->|Hybrid Scan| NER[Custom spaCy NER Model]
+    Lambda -->|Log Results| DB[(MongoDB Atlas)]
+    Admin([Admin]) -->|Monitor| Dashboard[Admin Dashboard]
+    Dashboard -->|Fetch Violations| DB
+```
 
 ---
 
-# 🚀 4. Features
+# 🚀 4. Technical Highlights
 
-### 🟢 User Features
-- Upload text or image files  
-- Immediate AI scan for PII  
-- Get warnings before posting  
-- View your flagged uploads  
-
-### 🔴 Admin Features
-- Dashboard with real-time violations  
-- View flagged users  
-- Audit logs  
-- Violation severity stats  
-- Export reports  
-
-### 🤖 AI Features
-- NLP NER-based PII detection  
-- OCR extraction from images  
-- Regex backup matching patterns  
-- Confidence scoring  
-- Hybrid model = better accuracy  
-
-### ☁️ Cloud Features
-- S3 → Lambda triggers  
-- API Gateway REST APIs  
-- IAM role-based access control  
-- CloudWatch monitoring  
-- Scalable stateless microservices  
+- **ML Transfer Learning:** Fine-tuned `en_core_web_sm` on a synthetic dataset of 250+ annotated Indian PII examples.
+- **Serverless Scaling:** Moved compute-intensive NLP/OCR tasks to AWS Lambda to reduce main server load.
+- **Dockerized Environment:** Guaranteed consistency across local development and AWS Lambda using Docker.
+- **Privacy-First Design:** Implemented robust PII masking and redaction rules.  
 
 ---
 
