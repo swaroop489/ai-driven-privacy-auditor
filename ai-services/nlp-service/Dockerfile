@@ -11,6 +11,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy app code
 COPY . .
 
+# Ensure the custom model is explicitly copied
+COPY model /app/model
+
 # Expose port
 EXPOSE 8000
 

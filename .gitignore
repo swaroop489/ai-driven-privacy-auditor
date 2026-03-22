@@ -1,11 +1,38 @@
-node_modules
+# Dependencies
+node_modules/
+venv/
 .env
-venv
+*.env
 
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+env/
+pip-log.txt
+pip-delete-this-directory.txt
 
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# AI/ML
+ai-services/nlp-service/training/training_data.json
+ai-services/nlp-service/model/custom_indian_pii/*
+
+# OS/IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Project Specific
 scripts/make_admin_docker.js
 scripts/make_admin.js
-
-docs
+docs/
