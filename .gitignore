@@ -23,6 +23,19 @@ coverage.xml
 *.cover
 .hypothesis/
 
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+_override.tf
+_override.tf.json
+.terraformrc
+terraform.rc
+
 # AI/ML
 ai-services/nlp-service/training/training_data.json
 ai-services/nlp-service/model/custom_indian_pii/*
