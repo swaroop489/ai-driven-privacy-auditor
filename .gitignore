@@ -7,3 +7,5 @@ __pycache__/
 
 scripts/make_admin_docker.js
 scripts/make_admin.js
+
+docs
