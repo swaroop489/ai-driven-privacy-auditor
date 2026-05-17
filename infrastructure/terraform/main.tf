@@ -74,7 +74,9 @@ resource "aws_lambda_function" "pii_scanner" {
 
   environment {
     variables = {
-      MONGO_URI = var.mongo_uri
+      MONGO_URI       = var.mongo_uri
+      NLP_SERVICE_URL = var.nlp_service_url
+      OCR_SERVICE_URL  = var.ocr_service_url
     }
   }
 

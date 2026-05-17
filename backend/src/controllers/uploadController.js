@@ -1,7 +1,14 @@
 // upload controller
 
-const { uploadToS3 } = require("../middlewares/s3Upload");
+const { uploadToS3, uploadTextToS3 } = require("../middlewares/s3Upload");
 const { auditContent } = require("../services/auditService");
+
+function shouldUseAwsLambda() {
+  return (
+    process.env.NODE_ENV === "production" &&
+    String(process.env.USE_AWS_LAMBDA).toLowerCase() === "true"
+  );
+}
 
 async function uploadContent(req, res, next) {
   try {
@@ -16,15 +23,23 @@ async function uploadContent(req, res, next) {
       });
     }
 
-    // Process S3 upload if in production and image exists
-    if (process.env.NODE_ENV === 'production' && image) {
+    // In production, route single payloads through S3 so Lambda can process them asynchronously.
+    if (shouldUseAwsLambda() && (text || image) && !(text && image)) {
       try {
-        fileUrl = await uploadToS3(image.buffer, image.mimetype, image.originalname);
+        if (text) {
+          fileUrl = await uploadTextToS3(text, "pii-scan.txt");
+        } else if (image) {
+          fileUrl = await uploadToS3(image.buffer, image.mimetype, image.originalname);
+        }
+
+        return res.status(202).json({
+          success: true,
+          mode: "AWS_LAMBDA",
+          message: "Content uploaded. AWS Lambda will process the scan asynchronously.",
+          fileUrl
+        });
       } catch (s3Error) {
         console.error("S3 Upload Error:", s3Error);
-        // Continue without blocking, or fail? Failing seems safer for "Privacy Auditor" but allow fallback for now or handle as error
-        // For now, let's log and proceed, but maybe we should fail if persistence is critical.
-        // Given user request "Fully on AWS", failure of AWS S3 should probably be critical in prod.
         return res.status(500).json({ success: false, message: "Failed to upload file to storage" });
       }
     }

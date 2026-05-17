@@ -11,3 +11,13 @@ variable "mongo_uri" {
   description = "MongoDB Atlas connection string for the Lambda function"
   sensitive   = true
 }
+
+variable "nlp_service_url" {
+  description = "Public URL for the NLP microservice"
+  default     = ""
+}
+
+variable "ocr_service_url" {
+  description = "Public URL for the OCR microservice"
+  default     = ""
+}
