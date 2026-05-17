@@ -46,7 +46,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "s3:GetObject",
           "s3:ListBucket"
         ]
-        Effect   = "Allow"
+        Effect = "Allow"
         Resource = [
           "${aws_s3_bucket.uploads.arn}",
           "${aws_s3_bucket.uploads.arn}/*"
@@ -71,17 +71,31 @@ resource "aws_lambda_function" "pii_scanner" {
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
   image_uri     = "${var.ecr_repository_url}:latest"
+  publish       = true
 
   environment {
     variables = {
-      MONGO_URI       = var.mongo_uri
-      NLP_SERVICE_URL = var.nlp_service_url
-      OCR_SERVICE_URL  = var.ocr_service_url
+      MONGO_URI             = var.mongo_uri
+      NLP_SERVICE_URL       = var.nlp_service_url
+      OCR_SERVICE_URL       = var.ocr_service_url
+      ENABLE_LOCAL_FALLBACK = "true"
     }
   }
 
   timeout     = 30
   memory_size = 512
+}
+
+resource "aws_lambda_alias" "live" {
+  name             = "live"
+  description      = "Production alias for the privacy auditor Lambda"
+  function_name    = aws_lambda_function.pii_scanner.function_name
+  function_version = aws_lambda_function.pii_scanner.version
+}
+
+resource "aws_cloudwatch_log_group" "lambda" {
+  name              = "/aws/lambda/${aws_lambda_function.pii_scanner.function_name}"
+  retention_in_days = 14
 }
 
 # 5. S3 Bucket Notification to trigger Lambda

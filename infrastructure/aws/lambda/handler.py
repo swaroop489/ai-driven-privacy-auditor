@@ -5,16 +5,17 @@ import urllib.parse
 import urllib.request
 import urllib.error
 import uuid
+import time
 from pymongo import MongoClient
 from datetime import datetime
-
-# Import our PII detection logic
-from utils.entity_extraction import extract_pii
 
 # Initialize S3 client
 s3 = boto3.client('s3')
 OCR_SERVICE_URL = os.environ.get("OCR_SERVICE_URL")
 NLP_SERVICE_URL = os.environ.get("NLP_SERVICE_URL")
+ENABLE_LOCAL_FALLBACK = str(os.environ.get("ENABLE_LOCAL_FALLBACK", "true")).lower() == "true"
+
+_cold_start = True
 
 # MongoDB Connection (using env vars)
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/privacy_auditor")
@@ -82,6 +83,15 @@ def _merge_violations(*groups):
     return merged
 
 
+def _extract_pii_fallback(text):
+    if not ENABLE_LOCAL_FALLBACK:
+        return {}
+
+    from utils.entity_extraction import extract_pii
+
+    return extract_pii(text)
+
+
 def _get_uploads_collection():
     return db.get_collection("uploads")
 
@@ -119,7 +129,7 @@ def _scan_image(bucket, key, content_type, body_bytes):
             print(f"NLP service call failed for {key}: {exc}")
 
     if not nlp_result and extracted_text:
-        nlp_result = extract_pii(extracted_text)
+        nlp_result = _extract_pii_fallback(extracted_text)
 
     violations = _merge_violations(
         ocr_result.get("violations", []),
@@ -148,7 +158,7 @@ def _scan_text(bucket, key, content_type, raw_content):
             print(f"NLP service call failed for {key}: {exc}")
 
     if not scan_result:
-        scan_result = extract_pii(raw_content)
+        scan_result = _extract_pii_fallback(raw_content)
 
     return {
         "source": f"s3://{bucket}/{key}",
@@ -167,11 +177,16 @@ def handler(event, context):
     Flow: S3 Put -> Lambda -> Download -> Extract PII -> Save to MongoDB
     """
     try:
+        global _cold_start
+        invocation_started_at = time.time()
+        is_cold_start = _cold_start
+        _cold_start = False
+
         # 1. Parse S3 Event
         bucket = event['Records'][0]['s3']['bucket']['name']
         key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
         
-        print(f"Received event for bucket: {bucket}, key: {key}")
+        print(f"Received event for bucket: {bucket}, key: {key}, cold_start={is_cold_start}")
 
         # 2. Download content from S3
         response = s3.get_object(Bucket=bucket, Key=key)
@@ -231,7 +246,9 @@ def handler(event, context):
             'body': json.dumps({
                 'message': 'Scan completed',
                 'jobId': job_id,
-                'action': scan_record["final_action"]
+                'action': scan_record["final_action"],
+                'coldStart': is_cold_start,
+                'invocationTimeMs': round((time.time() - invocation_started_at) * 1000, 2)
             })
         }
 
