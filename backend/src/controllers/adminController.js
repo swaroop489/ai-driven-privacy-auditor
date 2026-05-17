@@ -6,21 +6,29 @@ const Violation = require('../models/Violation');
 const ADMIN_STREAM_INTERVAL_MS = Number(process.env.ADMIN_STREAM_INTERVAL_MS || 5000);
 
 async function getAdminSnapshot() {
-  const userCount = await User.countDocuments();
-  const uploadCount = await Upload.countDocuments();
-  const violationCount = await Violation.countDocuments();
-  const highRiskCount = await Violation.countDocuments({ severity: 'HIGH' });
-
-  const violations = await Violation.find({})
-    .sort({ createdAt: -1 })
-    .limit(50)
-    .populate({
-      path: 'upload',
-      populate: {
-        path: 'user',
-        select: 'name email'
-      }
-    });
+  const [
+    userCount,
+    uploadCount,
+    violationCount,
+    highRiskCount,
+    violations
+  ] = await Promise.all([
+    User.countDocuments(),
+    Upload.countDocuments(),
+    Violation.countDocuments(),
+    Violation.countDocuments({ severity: 'HIGH' }),
+    Violation.find({})
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .populate({
+        path: 'upload',
+        populate: {
+          path: 'user',
+          select: 'name email'
+        }
+      })
+      .lean()
+  ]);
 
   return {
     stats: {

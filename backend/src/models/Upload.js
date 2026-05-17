@@ -51,6 +51,9 @@ const uploadSchema = mongoose.Schema({
   timestamps: true,
 });
 
+uploadSchema.index({ user: 1, createdAt: -1 });
+uploadSchema.index({ status: 1, createdAt: -1 });
+
 const Upload = mongoose.model('Upload', uploadSchema);
 
 module.exports = Upload;

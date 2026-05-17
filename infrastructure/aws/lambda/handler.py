@@ -19,7 +19,14 @@ _cold_start = True
 
 # MongoDB Connection (using env vars)
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/privacy_auditor")
-client = MongoClient(MONGO_URI)
+client = MongoClient(
+    MONGO_URI,
+    maxPoolSize=int(os.environ.get("MONGO_MAX_POOL_SIZE", "5")),
+    minPoolSize=int(os.environ.get("MONGO_MIN_POOL_SIZE", "0")),
+    serverSelectionTimeoutMS=int(os.environ.get("MONGO_SERVER_SELECTION_TIMEOUT_MS", "5000")),
+    connectTimeoutMS=int(os.environ.get("MONGO_CONNECT_TIMEOUT_MS", "5000")),
+    socketTimeoutMS=int(os.environ.get("MONGO_SOCKET_TIMEOUT_MS", "20000")),
+)
 db = client.get_database()
 
 
@@ -94,6 +101,21 @@ def _extract_pii_fallback(text):
 
 def _get_uploads_collection():
     return db.get_collection("uploads")
+
+
+def _get_violations_collection():
+    return db.get_collection("violations")
+
+
+def _get_stats_snapshot():
+    uploads = _get_uploads_collection()
+    violations = _get_violations_collection()
+
+    return {
+        "upload_count": uploads.count_documents({}),
+        "violation_count": violations.count_documents({}),
+        "high_risk_count": violations.count_documents({"severity": "HIGH"}),
+    }
 
 
 def _update_job(job_id, payload):
@@ -241,6 +263,8 @@ def handler(event, context):
 
         print(f"Successfully processed {key}. jobId={job_id}, matched={update_result.matched_count}")
 
+        stats_snapshot = _get_stats_snapshot()
+
         return {
             'statusCode': 200,
             'body': json.dumps({
@@ -248,7 +272,8 @@ def handler(event, context):
                 'jobId': job_id,
                 'action': scan_record["final_action"],
                 'coldStart': is_cold_start,
-                'invocationTimeMs': round((time.time() - invocation_started_at) * 1000, 2)
+                'invocationTimeMs': round((time.time() - invocation_started_at) * 1000, 2),
+                'statsSnapshot': stats_snapshot
             })
         }
 
