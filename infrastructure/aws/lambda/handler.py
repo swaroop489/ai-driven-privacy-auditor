@@ -82,6 +82,23 @@ def _merge_violations(*groups):
     return merged
 
 
+def _get_uploads_collection():
+    return db.get_collection("uploads")
+
+
+def _update_job(job_id, payload):
+    if not job_id:
+        return None
+
+    uploads = _get_uploads_collection()
+    uploads.update_one(
+        {"jobId": job_id},
+        {"$set": payload},
+        upsert=True,
+    )
+    return job_id
+
+
 def _scan_image(bucket, key, content_type, body_bytes):
     if not OCR_SERVICE_URL:
         raise RuntimeError("OCR_SERVICE_URL is required for image scans")
@@ -159,7 +176,16 @@ def handler(event, context):
         # 2. Download content from S3
         response = s3.get_object(Bucket=bucket, Key=key)
         content_type = response.get('ContentType', '')
+        metadata = response.get("Metadata", {}) or {}
+        job_id = metadata.get("jobid") or key
         body_bytes = response['Body'].read()
+
+        _update_job(job_id, {
+            "status": "PROCESSING",
+            "scanMode": "ASYNC",
+            "sourceKey": f"s3://{bucket}/{key}",
+            "fileUrl": f"s3://{bucket}/{key}",
+        })
         
         if 'text' in content_type or key.endswith('.txt'):
             raw_content = body_bytes.decode('utf-8', errors='ignore')
@@ -172,6 +198,7 @@ def handler(event, context):
 
         # 3. Enrich result with metadata
         scan_record = {
+            "jobId": job_id,
             "source": scan_result["source"],
             "processed_at": datetime.utcnow(),
             "content_type": scan_result["content_type"],
@@ -186,22 +213,37 @@ def handler(event, context):
 
         # 5. Persist to MongoDB
         print("Saving scan results to MongoDB...")
-        scans_col = db.get_collection("scans")
-        insert_result = scans_col.insert_one(scan_record)
-        
-        print(f"Successfully processed {key}. ID: {insert_result.inserted_id}")
+        uploads_col = _get_uploads_collection()
+        update_result = uploads_col.update_one(
+            {"jobId": job_id},
+            {"$set": {
+                **scan_record,
+                "status": "COMPLETED",
+                "errorMessage": None,
+            }},
+            upsert=True,
+        )
+
+        print(f"Successfully processed {key}. jobId={job_id}, matched={update_result.matched_count}")
 
         return {
             'statusCode': 200,
             'body': json.dumps({
                 'message': 'Scan completed',
-                'id': str(insert_result.inserted_id),
+                'jobId': job_id,
                 'action': scan_record["final_action"]
             })
         }
 
     except Exception as e:
         print(f"Error processing S3 event: {str(e)}")
+        try:
+            _update_job(job_id if 'job_id' in locals() else None, {
+                "status": "FAILED",
+                "errorMessage": str(e),
+            })
+        except Exception as update_error:
+            print(f"Failed to update job status: {update_error}")
         return {
             'statusCode': 500,
             'body': json.dumps({'error': str(e)})

@@ -15,7 +15,7 @@ const s3Client = new S3Client({
  * @param {string} originalName - Original filename to extract extension
  * @returns {Promise<string>} - The S3 object URL
  */
-async function uploadToS3(fileBuffer, mimeType, originalName) {
+async function uploadToS3(fileBuffer, mimeType, originalName, metadata = {}) {
     const fileExt = originalName.split('.').pop();
     const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}.${fileExt}`;
 
@@ -24,6 +24,7 @@ async function uploadToS3(fileBuffer, mimeType, originalName) {
         Key: fileName,
         Body: fileBuffer,
         ContentType: mimeType,
+        Metadata: metadata,
     });
 
     await s3Client.send(command);
@@ -32,7 +33,7 @@ async function uploadToS3(fileBuffer, mimeType, originalName) {
     return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
 }
 
-async function uploadTextToS3(text, originalName = "content.txt") {
+async function uploadTextToS3(text, originalName = "content.txt", metadata = {}) {
     const fileExt = originalName.split('.').pop() || "txt";
     const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}.${fileExt}`;
 
@@ -41,6 +42,7 @@ async function uploadTextToS3(text, originalName = "content.txt") {
         Key: fileName,
         Body: text,
         ContentType: "text/plain",
+        Metadata: metadata,
     });
 
     await s3Client.send(command);

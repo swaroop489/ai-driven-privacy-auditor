@@ -62,6 +62,8 @@ async function auditContent({ text, image, userId, fileUrl }) {
   const upload = await Upload.create({
     user: userId,
     inputType,
+    scanMode: "SYNC",
+    status: "COMPLETED",
     action: finalAction,
     violationCount: processed.length,
     fileUrl: fileUrl || undefined
