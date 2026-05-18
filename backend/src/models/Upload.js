@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const uploadSchema = mongoose.Schema({
+  jobId: {
+    type: String,
+    index: true,
+    sparse: true,
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -13,6 +18,24 @@ const uploadSchema = mongoose.Schema({
   },
   fileUrl: {
     type: String, // Store S3 URL if uploaded
+  },
+  sourceKey: {
+    type: String,
+    index: true,
+    sparse: true,
+  },
+  scanMode: {
+    type: String,
+    enum: ['SYNC', 'ASYNC'],
+    default: 'SYNC',
+  },
+  status: {
+    type: String,
+    enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'],
+    default: 'COMPLETED',
+  },
+  errorMessage: {
+    type: String,
   },
   action: {
     type: String,
@@ -27,6 +50,9 @@ const uploadSchema = mongoose.Schema({
 }, {
   timestamps: true,
 });
+
+uploadSchema.index({ user: 1, createdAt: -1 });
+uploadSchema.index({ status: 1, createdAt: -1 });
 
 const Upload = mongoose.model('Upload', uploadSchema);
 

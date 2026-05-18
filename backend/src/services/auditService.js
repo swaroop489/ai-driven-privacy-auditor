@@ -33,14 +33,21 @@ async function auditContent({ text, image, userId, fileUrl }) {
   if (text && image) inputType = "TEXT_IMAGE";
   else if (image) inputType = "IMAGE";
 
+  const serviceCalls = [];
+
   if (text) {
-    const nlpResult = await analyzeText(text);
-    violations.push(...(nlpResult.violations || []));
+    serviceCalls.push(analyzeText(text));
   }
 
   if (image) {
-    const ocrResult = await analyzeImage(image);
-    violations.push(...(ocrResult.violations || []));
+    serviceCalls.push(analyzeImage(image));
+  }
+
+  if (serviceCalls.length > 0) {
+    const results = await Promise.all(serviceCalls);
+    for (const result of results) {
+      violations.push(...(result.violations || []));
+    }
   }
 
   const processed = violations.map(v => ({
@@ -62,6 +69,8 @@ async function auditContent({ text, image, userId, fileUrl }) {
   const upload = await Upload.create({
     user: userId,
     inputType,
+    scanMode: "SYNC",
+    status: "COMPLETED",
     action: finalAction,
     violationCount: processed.length,
     fileUrl: fileUrl || undefined

@@ -46,7 +46,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "s3:GetObject",
           "s3:ListBucket"
         ]
-        Effect   = "Allow"
+        Effect = "Allow"
         Resource = [
           "${aws_s3_bucket.uploads.arn}",
           "${aws_s3_bucket.uploads.arn}/*"
@@ -71,10 +71,14 @@ resource "aws_lambda_function" "pii_scanner" {
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
   image_uri     = "${var.ecr_repository_url}:latest"
+  publish       = true
 
   environment {
     variables = {
-      MONGO_URI = var.mongo_uri
+      MONGO_URI             = var.mongo_uri
+      NLP_SERVICE_URL       = var.nlp_service_url
+      OCR_SERVICE_URL       = var.ocr_service_url
+      ENABLE_LOCAL_FALLBACK = "true"
     }
   }
 
@@ -82,12 +86,63 @@ resource "aws_lambda_function" "pii_scanner" {
   memory_size = 512
 }
 
+resource "aws_lambda_alias" "live" {
+  name             = "live"
+  description      = "Production alias for the privacy auditor Lambda"
+  function_name    = aws_lambda_function.pii_scanner.function_name
+  function_version = aws_lambda_function.pii_scanner.version
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "live" {
+  count                             = var.enable_provisioned_concurrency ? 1 : 0
+  function_name                     = aws_lambda_function.pii_scanner.function_name
+  qualifier                         = aws_lambda_alias.live.name
+  provisioned_concurrent_executions = var.provisioned_concurrency_count
+}
+
+resource "aws_cloudwatch_log_group" "lambda" {
+  name              = "/aws/lambda/${aws_lambda_function.pii_scanner.function_name}"
+  retention_in_days = 14
+}
+
+resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
+  alarm_name          = "${aws_lambda_function.pii_scanner.function_name}-errors"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = 300
+  statistic           = "Sum"
+  threshold           = var.lambda_error_alarm_threshold
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    FunctionName = aws_lambda_function.pii_scanner.function_name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
+  alarm_name          = "${aws_lambda_function.pii_scanner.function_name}-duration"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "Duration"
+  namespace           = "AWS/Lambda"
+  period              = 300
+  statistic           = "Average"
+  threshold           = var.lambda_duration_alarm_threshold_ms
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    FunctionName = aws_lambda_function.pii_scanner.function_name
+  }
+}
+
 # 5. S3 Bucket Notification to trigger Lambda
 resource "aws_s3_bucket_notification" "bucket_notification" {
   bucket = aws_s3_bucket.uploads.id
 
   lambda_function {
-    lambda_function_arn = aws_lambda_function.pii_scanner.arn
+    lambda_function_arn = aws_lambda_alias.live.arn
     events              = ["s3:ObjectCreated:*"]
   }
 
@@ -98,7 +153,7 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
 resource "aws_lambda_permission" "allow_s3" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.pii_scanner.function_name
+  function_name = aws_lambda_alias.live.arn
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.uploads.arn
 }

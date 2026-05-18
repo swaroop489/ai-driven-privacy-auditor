@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import { getSystemStats, getGlobalViolations } from '../services/adminService';
 import { useAuth } from '../context/AuthContext';
@@ -10,14 +10,30 @@ const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
     const [violations, setViolations] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [connectionState, setConnectionState] = useState('connecting');
+    const streamRef = useRef(null);
+
+    const applySnapshot = (snapshot) => {
+        if (!snapshot) {
+            return;
+        }
+
+        if (snapshot.stats) {
+            setStats(snapshot.stats);
+        }
+
+        if (Array.isArray(snapshot.violations)) {
+            setViolations(snapshot.violations);
+        }
+    };
 
     useEffect(() => {
         if (!user || user.role !== 'admin') {
-            // If not logged in or not admin, redirect.
-            // If not logged in, AuthContext usually handles it, but double check here.
             navigate('/admin/login');
             return;
         }
+
+        const token = localStorage.getItem('token');
 
         const fetchData = async () => {
             try {
@@ -27,14 +43,55 @@ const AdminDashboard = () => {
                 ]);
                 setStats(statsData);
                 setViolations(violationsData);
+                setConnectionState('live');
             } catch (error) {
                 console.error("Failed to fetch admin data", error);
+                setConnectionState('disconnected');
             } finally {
                 setLoading(false);
             }
         };
 
+        const openStream = () => {
+            if (!token) {
+                setConnectionState('disconnected');
+                return;
+            }
+
+            const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const streamUrl = `${apiBase.replace(/\/$/, '')}/admin/stream?token=${encodeURIComponent(token)}`;
+            const eventSource = new EventSource(streamUrl);
+            streamRef.current = eventSource;
+
+            eventSource.addEventListener('snapshot', (event) => {
+                try {
+                    const snapshot = JSON.parse(event.data);
+                    applySnapshot(snapshot);
+                    setConnectionState('live');
+                    setLoading(false);
+                } catch (error) {
+                    console.error('Failed to parse admin snapshot', error);
+                }
+            });
+
+            eventSource.addEventListener('heartbeat', () => {
+                setConnectionState('live');
+            });
+
+            eventSource.addEventListener('error', () => {
+                setConnectionState('reconnecting');
+            });
+        };
+
         fetchData();
+        openStream();
+
+        return () => {
+            if (streamRef.current) {
+                streamRef.current.close();
+                streamRef.current = null;
+            }
+        };
     }, [user, navigate]);
 
     if (loading) {
@@ -48,6 +105,9 @@ const AdminDashboard = () => {
                 <header className="mb-8">
                     <h1 className="text-3xl font-bold">Admin Dashboard</h1>
                     <p className="text-gray-400">System overview and compliance monitoring.</p>
+                    <p className="text-xs uppercase tracking-[0.2em] text-teal-400 mt-2">
+                        Live stream: {connectionState}
+                    </p>
                 </header>
 
                 {/* Stats Grid */}
