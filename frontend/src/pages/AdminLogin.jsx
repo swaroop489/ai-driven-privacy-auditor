@@ -15,14 +15,10 @@ const AdminLogin = () => {
         const result = await login(email, password);
 
         if (result.success) {
-            // Check role after login
             const user = JSON.parse(localStorage.getItem('user'));
             if (user && user.role === 'admin') {
                 navigate('/admin');
             } else {
-                setError('Access Denied: Admins only.');
-                // Optional: Logout if they are not admin to clear state
-                // logout(); 
             }
         } else {
             setError(result.message);

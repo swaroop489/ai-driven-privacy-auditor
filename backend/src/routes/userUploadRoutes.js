@@ -1,5 +1,3 @@
-// user uploads routes
-
 const express = require("express");
 const { fetchUserUploads } = require("../controllers/userUploadController");
 const { protect } = require("../middlewares/authMiddleware");

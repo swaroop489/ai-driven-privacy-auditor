@@ -1,5 +1,3 @@
-// user uploads controller
-
 const { getUserUploads } = require("../services/userUploadService");
 
 async function fetchUserUploads(req, res, next) {

@@ -17,7 +17,7 @@ ENABLE_LOCAL_FALLBACK = str(os.environ.get("ENABLE_LOCAL_FALLBACK", "true")).low
 
 _cold_start = True
 
-# MongoDB Connection (using env vars)
+# MongoDB Connection 
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/privacy_auditor")
 client = MongoClient(
     MONGO_URI,

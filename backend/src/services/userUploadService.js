@@ -1,5 +1,3 @@
-// fetch user uploads with pagination & filters
-
 const Upload = require("../models/Upload");
 const Violation = require("../models/Violation");
 

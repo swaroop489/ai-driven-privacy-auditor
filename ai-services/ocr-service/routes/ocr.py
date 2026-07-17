@@ -1,12 +1,3 @@
-"""
-ocr.py
-------
-FastAPI route for OCR-based PII detection.
-
-Flow:
-Image → OCR → Text → PII Detection → JSON Response
-"""
-
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 import tempfile
@@ -38,9 +29,7 @@ async def ocr_and_detect_pii(file: UploadFile = File(...)):
 
     start_time = time.time()
 
-    # -------------------------
     # Validate file type
-    # -------------------------
     if file.content_type not in SUPPORTED_CONTENT_TYPES:
         raise HTTPException(
             status_code=400,
@@ -50,9 +39,7 @@ async def ocr_and_detect_pii(file: UploadFile = File(...)):
     temp_file_path = None
 
     try:
-        # -------------------------
-        # Save file temporarily (preserve extension)
-        # -------------------------
+        
         suffix = os.path.splitext(file.filename)[1] or ".png"
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -61,9 +48,7 @@ async def ocr_and_detect_pii(file: UploadFile = File(...)):
 
         logger.info(f"OCR started for file: {file.filename}")
 
-        # -------------------------
         # OCR Extraction
-        # -------------------------
         extracted_text = extract_text_from_image(temp_file_path)
 
         if not extracted_text:
@@ -77,9 +62,8 @@ async def ocr_and_detect_pii(file: UploadFile = File(...)):
                 }
             )
 
-        # -------------------------
+        
         # Clean & Detect PII
-        # -------------------------
         cleaned_text = clean_ocr_text(extracted_text)
         pii_result = detect_pii_from_text(cleaned_text)
 
@@ -89,7 +73,6 @@ async def ocr_and_detect_pii(file: UploadFile = File(...)):
             "has_violation": pii_result["has_violation"],
             "violation_count": pii_result["violation_count"],
             "violations": pii_result["violations"],
-            # 🔐 optional: comment this out in production
             "extracted_text": cleaned_text[:300],
             "processing_time_ms": processing_time_ms
         }
@@ -102,8 +85,6 @@ async def ocr_and_detect_pii(file: UploadFile = File(...)):
         )
 
     finally:
-        # -------------------------
         # Cleanup temp file
-        # -------------------------
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)

@@ -1,5 +1,3 @@
-// audit decision engine + persistence
-
 const { analyzeText } = require("./nlpService");
 const { analyzeImage } = require("./ocrService");
 const { maskPII } = require("../utils/piiMasker");

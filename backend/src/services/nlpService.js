@@ -1,5 +1,3 @@
-// NLP service connector
-
 const axios = require("axios");
 const http = require("http");
 const https = require("https");
@@ -22,9 +20,6 @@ async function analyzeText(text) {
     return response.data;
   } catch (error) {
     console.error(`NLP Service Error: ${error.message} (URL: ${NLP_SERVICE_URL})`);
-    // Return empty result to avoid crashing the whole flow? Or rethrow?
-    // User sees "Something went wrong", so maybe text analysis failed.
-    // Let's propagate a clearer error.
     throw new Error(`NLP Service failed: ${error.response?.data?.detail || error.message}`);
   }
 }

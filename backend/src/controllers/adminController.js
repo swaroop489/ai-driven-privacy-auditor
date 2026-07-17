@@ -1,4 +1,3 @@
-// admin controller
 const User = require('../models/User');
 const Upload = require('../models/Upload');
 const Violation = require('../models/Violation');
@@ -41,9 +40,7 @@ async function getAdminSnapshot() {
   };
 }
 
-// @desc    Get system stats
-// @route   GET /api/admin/stats
-// @access  Private/Admin
+
 const getSystemStats = async (req, res) => {
   try {
     const { stats } = await getAdminSnapshot();
@@ -56,9 +53,7 @@ const getSystemStats = async (req, res) => {
   }
 };
 
-// @desc    Get recent violations
-// @route   GET /api/admin/violations
-// @access  Private/Admin
+
 const getGlobalViolations = async (req, res) => {
   try {
     const { violations } = await getAdminSnapshot();

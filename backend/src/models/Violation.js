@@ -1,5 +1,3 @@
-// violation model
-
 const mongoose = require("mongoose");
 
 const violationSchema = new mongoose.Schema(

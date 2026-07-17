@@ -6,10 +6,6 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    // Remove useNavigate here as AuthProvider is usually top-level. 
-    // We'll return navigate logic or handle it in components.
-    // Actually, if AuthProvider is inside Router, we can use navigate.
-    // Let's assume it is.
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');

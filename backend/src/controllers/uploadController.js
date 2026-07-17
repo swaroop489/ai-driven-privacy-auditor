@@ -1,5 +1,3 @@
-// upload controller
-
 const crypto = require("crypto");
 const { uploadToS3, uploadTextToS3 } = require("../middlewares/s3Upload");
 const { auditContent } = require("../services/auditService");
@@ -25,7 +23,6 @@ async function uploadContent(req, res, next) {
       });
     }
 
-    // In production, route single payloads through S3 so Lambda can process them asynchronously.
     if (shouldUseAwsLambda() && (text || image) && !(text && image)) {
       const jobId = crypto.randomUUID();
       const inputType = text ? "TEXT" : "IMAGE";

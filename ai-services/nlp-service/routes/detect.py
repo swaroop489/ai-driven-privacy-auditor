@@ -14,9 +14,9 @@ from utils.entity_extraction import extract_pii
 
 router = APIRouter()
 
-# =========================
+
 # Request Schema
-# =========================
+
 class TextRequest(BaseModel):
     text: str = Field(
         ...,
@@ -26,9 +26,9 @@ class TextRequest(BaseModel):
     )
 
 
-# =========================
+
 # Response Schema
-# =========================
+
 class PiiResponse(BaseModel):
     has_violation: bool
     violation_count: int
@@ -36,9 +36,9 @@ class PiiResponse(BaseModel):
     processing_time_ms: float
 
 
-# =========================
+
 # API Route
-# =========================
+
 @router.post("/predict", response_model=PiiResponse)
 def detect_pii(request: TextRequest):
     """

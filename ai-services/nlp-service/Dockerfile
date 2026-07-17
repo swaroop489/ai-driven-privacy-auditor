@@ -6,12 +6,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Note: Model is installed via requirements.txt, so manual download step is removed
-
 # Copy app code
 COPY . .
 
-# Ensure the custom model is explicitly copied
 COPY model /app/model
 
 # Expose port

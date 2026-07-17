@@ -1,5 +1,3 @@
-// admin analytics service
-
 const Upload = require("../models/Upload");
 const Violation = require("../models/Violation");
 const AuditLog = require("../models/AuditLog");

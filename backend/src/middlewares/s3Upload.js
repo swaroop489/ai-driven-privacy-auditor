@@ -29,7 +29,6 @@ async function uploadToS3(fileBuffer, mimeType, originalName, metadata = {}) {
 
     await s3Client.send(command);
 
-    // Return the URL (assuming standard S3 URL format)
     return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
 }
 

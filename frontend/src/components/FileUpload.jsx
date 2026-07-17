@@ -9,7 +9,6 @@ const FileUpload = ({ onUpload, loading }) => {
         const selectedFile = e.target.files[0];
         if (selectedFile) {
             setFile(selectedFile);
-            // Create preview if it's an image
             if (selectedFile.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onloadend = () => {

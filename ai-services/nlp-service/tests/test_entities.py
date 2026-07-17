@@ -3,16 +3,15 @@ import sys
 import os
 import json
 
-# Add parent directory to path so we can import utils
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.entity_extraction import extract_pii
 from utils.preprocess import preprocess_for_ner, normalize_text, clean_ocr_noise
 from utils.response_formatter import mask_pii
 
-# =======================
+
 # Preprocessing Tests
-# =======================
+
 def test_normalize_text():
     raw = "This   is \n\na test. "
     clean = normalize_text(raw)
@@ -23,9 +22,9 @@ def test_clean_ocr_noise():
     clean = clean_ocr_noise(raw)
     assert "|" not in clean
 
-# =======================
+
 # Redaction/Masking Tests
-# =======================
+
 def test_mask_aadhar():
     assert mask_pii("1234 5678 9012", "AADHAR") == "XXXX XXXX 9012"
 
@@ -38,9 +37,9 @@ def test_mask_phone():
 def test_mask_email():
     assert mask_pii("test.user@gmail.com", "EMAIL") == "t*******r@gmail.com"
 
-# =======================
+
 # Entity Extraction Tests
-# =======================
+
 def test_single_aadhar():
     text = "My Aadhar number is 1234 5678 9012."
     result = extract_pii(text)

@@ -7,14 +7,12 @@
 function maskPII(type, text) {
     if (!text) return "";
 
-    // Show last 4 chars for better context, or default to full mask
     const visibleChars = 4;
 
     if (text.length <= visibleChars) {
         return "*".repeat(text.length);
     }
 
-    // Strategies based on type
     if (type === 'EMAIL') {
         const [local, domain] = text.split('@');
         const maskedLocal = local.length > 2 ? local.substring(0, 2) + '*'.repeat(local.length - 2) : '*'.repeat(local.length);

@@ -1,5 +1,3 @@
-// upload routes
-
 const express = require("express");
 const multer = require("multer");
 const { uploadContent } = require("../controllers/uploadController");

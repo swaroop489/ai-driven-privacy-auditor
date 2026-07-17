@@ -1,5 +1,3 @@
-// OCR service connector
-
 const axios = require("axios");
 const FormData = require("form-data");
 const http = require("http");
