@@ -90,14 +90,11 @@ def extract_pii(text: str) -> Dict:
                 "severity": SEVERITY_MAP.get(pii_type, "LOW")
             })
 
-    llm_violations = extract_pii_with_llm(processed_text)
-    violations.extend(llm_violations)
-
     unique_violations = []
     
     sorted_violations = sorted(
         violations,
-        key=lambda x: (0 if x["source"] == "LLM" else 1, -(x["end"] - x["start"]))
+        key=lambda x: -(x["end"] - x["start"])
     )
 
     def is_overlapping(v1, v2):
@@ -112,6 +109,24 @@ def extract_pii(text: str) -> Dict:
         if not overlap:
             unique_violations.append(v)
             
+    # PRE-LLM MASKING: Create a scrubbed payload so the LLM never sees raw PII
+    masked_text = processed_text
+    # Replace from end to start to avoid index shifting
+    for v in sorted(unique_violations, key=lambda x: x["start"], reverse=True):
+        if v["source"] != "VECTOR_SEARCH":
+            masked_text = masked_text[:v["start"]] + f"[{v['type']}]" + masked_text[v["end"]:]
+
+    # Pass the SAFE payload to Gemini
+    llm_violations = extract_pii_with_llm(masked_text)
+    
+    # Merge LLM contextual violations back with real indices
+    for lv in llm_violations:
+        found_idx = processed_text.find(lv.get("text", ""))
+        if found_idx != -1:
+            lv["start"] = found_idx
+            lv["end"] = found_idx + len(lv.get("text", ""))
+            unique_violations.append(lv)
+
     processing_time_ms = round((time.time() - start_time) * 1000, 2)
 
     return format_detection_response(unique_violations, processing_time_ms)
