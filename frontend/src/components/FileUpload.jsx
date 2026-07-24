@@ -45,7 +45,7 @@ const FileUpload = ({ onUpload, loading }) => {
 
                 <div>
                     <label className="block text-sm font-medium text-gray-400 mb-2">
-                        Upload Image (Optional)
+                        Upload Media (Image, Audio, Video)
                     </label>
                     <div className="flex items-center justify-center w-full">
                         <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-700 border-dashed rounded-xl cursor-pointer hover:bg-gray-800/50 hover:border-blue-500/50 transition-all duration-300 group">
@@ -60,11 +60,11 @@ const FileUpload = ({ onUpload, loading }) => {
                                         <p className="mb-2 text-sm text-gray-400 group-hover:text-gray-300">
                                             <span className="font-semibold">Click to upload</span> or drag and drop
                                         </p>
-                                        <p className="text-xs text-gray-500">PNG, JPG, JPEG</p>
+                                        <p className="text-xs text-gray-500">PNG, JPG, MP3, WAV, MP4, MOV</p>
                                     </>
                                 )}
                             </div>
-                            <input type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                            <input type="file" className="hidden" onChange={handleFileChange} accept="image/*, audio/*, video/*" />
                         </label>
                     </div>
                     {file && (

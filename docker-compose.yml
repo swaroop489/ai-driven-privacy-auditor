@@ -9,6 +9,7 @@ services:
       - MONGO_URI=${MONGO_URI}
       - NLP_SERVICE_URL=${NLP_SERVICE_URL}
       - OCR_SERVICE_URL=${OCR_SERVICE_URL}
+      - MEDIA_SERVICE_URL=${MEDIA_SERVICE_URL}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION}
@@ -41,6 +42,12 @@ services:
     ports:
       - "8002:8000"
 
+  media-service:
+    build: ./ai-services/media-service
+    ports:
+      - "8003:8000"
+    environment:
+      - NLP_SERVICE_URL=http://nlp-service:8000/api/v1/predict
 
   mongo:
     image: mongo:latest
