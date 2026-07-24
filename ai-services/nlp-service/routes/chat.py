@@ -1,12 +1,12 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-import os
 import google.generativeai as genai
 from utils.vector_search import check_document_similarity, confidential_collection, get_embedding, cosine_similarity
 import numpy as np
+from config import settings
 
 router = APIRouter()
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+genai.configure(api_key=settings.GEMINI_API_KEY)
 
 class ChatRequest(BaseModel):
     query: str
@@ -41,7 +41,7 @@ def chat_with_docs(request: ChatRequest):
         else:
             prompt = f"You are a helpful privacy auditor assistant. Answer the user's question based ONLY on this confidential context:\n{context}\n\nQuestion: {request.query}"
             
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel(settings.GEMINI_MODEL_NAME)
         response = model.generate_content(prompt)
         
         return {"response": response.text, "context_found": bool(context)}

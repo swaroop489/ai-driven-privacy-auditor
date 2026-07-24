@@ -16,10 +16,28 @@ except Exception:
     embedder = None
     np = None
 
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/privacy_auditor")
+from config import settings
+MONGO_URI = settings.MONGO_URI
 client = MongoClient(MONGO_URI)
 db = client.get_database()
 confidential_collection = db.get_collection("confidential_docs")
+
+def add_confidential_document(name: str, text: str):
+    if not embedder or not text.strip():
+        return False
+    vec = get_embedding(text)
+    if vec is None:
+        return False
+        
+    doc = {
+        "name": name,
+        "text": text,
+        "vector": vec.tolist(),
+        "is_active": True,
+        "created_at": time.time()
+    }
+    confidential_collection.insert_one(doc)
+    return True
 
 def get_embedding(text: str):
     if not embedder or not np:

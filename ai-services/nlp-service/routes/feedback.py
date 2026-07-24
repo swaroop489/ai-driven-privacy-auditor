@@ -4,8 +4,9 @@ import os
 from pymongo import MongoClient
 
 router = APIRouter()
+from config import settings
 
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/privacy_auditor")
+MONGO_URI = settings.MONGO_URI
 client = MongoClient(MONGO_URI)
 db = client.get_database()
 feedback_collection = db.get_collection("training_feedback")

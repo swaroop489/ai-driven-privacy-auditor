@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import whisper
 import requests
 import os
@@ -6,12 +7,22 @@ import tempfile
 import shutil
 
 from utils.media_processor import extract_audio_from_video
+from config import settings
 
-app = FastAPI(title="Multimodal Privacy Service")
+app = FastAPI(title="Media Service API")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 model = whisper.load_model("tiny")
 
-NLP_SERVICE_URL = os.environ.get("NLP_SERVICE_URL", "http://localhost:8000/api/v1/predict")
+NLP_SERVICE_URL = settings.NLP_SERVICE_URL
 SUPPORTED_EXTENSIONS = ('.mp3', '.wav', '.m4a', '.mp4', '.avi', '.mov', '.mkv')
 VIDEO_EXTENSIONS = ('.mp4', '.avi', '.mov', '.mkv')
 

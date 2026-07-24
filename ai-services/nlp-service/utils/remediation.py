@@ -1,10 +1,11 @@
 import os
 import requests
 import logging
+from config import settings
 
 logger = logging.getLogger(__name__)
 
-SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL", "https://hooks.slack.com/services/MOCK/WEBHOOK")
+SLACK_WEBHOOK_URL = settings.SLACK_WEBHOOK_URL
 
 def trigger_slack_alert(violation: dict):
     payload = {

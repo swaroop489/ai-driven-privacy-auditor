@@ -12,7 +12,33 @@ const AdminDashboard = () => {
     const [violations, setViolations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [connectionState, setConnectionState] = useState('connecting');
+    const [ipName, setIpName] = useState('');
+    const [ipText, setIpText] = useState('');
+    const [ipStatus, setIpStatus] = useState('');
     const streamRef = useRef(null);
+
+    const handleFingerprint = async (e) => {
+        e.preventDefault();
+        try {
+            setIpStatus('Fingerprinting...');
+            const token = localStorage.getItem('token');
+            const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const res = await fetch(`${apiBase}/admin/fingerprint`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ name: ipName, text: ipText })
+            });
+            if (res.ok) {
+                setIpStatus('Success! Document Fingerprinted.');
+                setIpName(''); setIpText('');
+                setTimeout(() => setIpStatus(''), 3000);
+            } else {
+                setIpStatus('Error generating fingerprint.');
+            }
+        } catch (err) {
+            setIpStatus('Error connecting to backend.');
+        }
+    };
 
     const handleFalsePositive = async (violation) => {
         try {
@@ -144,6 +170,26 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Intellectual Property Fingerprinting */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-8">
+                    <h3 className="text-xl font-bold text-slate-800 flex items-center mb-4">
+                        <svg className="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.071 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" /></svg>
+                        Confidential IP Fingerprinting (Semantic DLP)
+                    </h3>
+                    <form onSubmit={handleFingerprint} className="space-y-4">
+                        <div>
+                            <input type="text" placeholder="Document Name (e.g. Q4 Strategy)" required value={ipName} onChange={e => setIpName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"/>
+                        </div>
+                        <div>
+                            <textarea placeholder="Paste confidential document text here to generate a vector fingerprint..." required value={ipText} onChange={e => setIpText(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 h-32 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none"></textarea>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <button type="submit" className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg text-sm shadow-md shadow-indigo-500/30 hover:bg-indigo-700 transition-all">Generate Fingerprint</button>
+                            {ipStatus && <span className="text-sm font-semibold text-emerald-600">{ipStatus}</span>}
+                        </div>
+                    </form>
+                </div>
 
                 {/* Recent Violations Table */}
                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">

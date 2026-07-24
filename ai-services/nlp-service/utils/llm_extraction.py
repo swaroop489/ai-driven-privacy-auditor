@@ -2,13 +2,14 @@ import os
 import json
 import traceback
 from typing import List, Dict
+from config import settings
 
 try:
     import google.generativeai as genai
-    api_key = os.environ.get("GEMINI_API_KEY", "")
+    api_key = settings.GEMINI_API_KEY
     if api_key:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(os.environ.get("GEMINI_MODEL_NAME", "gemini-1.5-flash"))
+        model = genai.GenerativeModel(settings.GEMINI_MODEL_NAME)
     else:
         model = None
 except ImportError:
@@ -18,7 +19,7 @@ def extract_pii_with_llm(text: str) -> List[Dict]:
     """
     Use Gemini to identify contextual PII, secrets, or confidential data that standard NER might miss.
     """
-    if not model or not os.environ.get("GEMINI_API_KEY"):
+    if not model or not settings.GEMINI_API_KEY:
         return []
 
     prompt = f"""
