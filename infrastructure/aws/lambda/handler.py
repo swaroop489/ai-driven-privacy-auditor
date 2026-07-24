@@ -13,6 +13,7 @@ from datetime import datetime
 s3 = boto3.client('s3')
 OCR_SERVICE_URL = os.environ.get("OCR_SERVICE_URL")
 NLP_SERVICE_URL = os.environ.get("NLP_SERVICE_URL")
+MEDIA_SERVICE_URL = os.environ.get("MEDIA_SERVICE_URL")
 ENABLE_LOCAL_FALLBACK = str(os.environ.get("ENABLE_LOCAL_FALLBACK", "true")).lower() == "true"
 
 _cold_start = True
@@ -193,6 +194,29 @@ def _scan_text(bucket, key, content_type, raw_content):
         "processing_time_ms": scan_result.get("processing_time_ms", 0),
     }
 
+def _scan_media(bucket, key, content_type, body_bytes):
+    if not MEDIA_SERVICE_URL:
+        raise RuntimeError("MEDIA_SERVICE_URL is required for media scans")
+        
+    media_result = _post_multipart(
+        MEDIA_SERVICE_URL,
+        body_bytes,
+        filename=key.split("/")[-1] or "upload.mp4",
+        content_type=content_type or "application/octet-stream",
+    )
+    
+    scan_result = media_result.get("privacy_scan", {})
+    return {
+        "source": f"s3://{bucket}/{key}",
+        "content_type": content_type,
+        "has_violation": scan_result.get("has_violation", False),
+        "violation_count": scan_result.get("violation_count", 0),
+        "summary": scan_result.get("summary", {}),
+        "violations": scan_result.get("violations", []),
+        "final_action": scan_result.get("final_action", "ALLOW"),
+        "processing_time_ms": scan_result.get("processing_time_ms", 0),
+    }
+
 def handler(event, context):
     """
     AWS Lambda handler invoked by S3 events.
@@ -229,6 +253,8 @@ def handler(event, context):
             scan_result = _scan_text(bucket, key, content_type, raw_content)
         elif content_type.startswith("image/") or key.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp')):
             scan_result = _scan_image(bucket, key, content_type, body_bytes)
+        elif content_type.startswith("audio/") or content_type.startswith("video/") or key.lower().endswith(('.mp3', '.wav', '.m4a', '.mp4', '.avi', '.mov', '.mkv')):
+            scan_result = _scan_media(bucket, key, content_type, body_bytes)
         else:
             raw_content = body_bytes.decode('utf-8', errors='ignore')
             scan_result = _scan_text(bucket, key, content_type, raw_content)
