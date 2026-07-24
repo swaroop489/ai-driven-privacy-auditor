@@ -5,6 +5,12 @@ from utils.preprocess import preprocess_for_ner
 from utils.response_formatter import format_detection_response
 from utils.llm_extraction import extract_pii_with_llm
 
+try:
+    from transformers import pipeline
+    ner_pipeline = pipeline("ner", model="dslim/bert-base-NER", aggregation_strategy="simple")
+except ImportError:
+    ner_pipeline = None
+
 REGEX_PATTERNS = {
     "EMAIL": r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b",
     "INDIAN_PHONE": r"\b(\+91[\-\s]?)?[6-9]\d{9}\b",
@@ -24,11 +30,14 @@ SEVERITY_MAP = {
     "EMAIL": "MEDIUM",
     "UPI_ID": "MEDIUM",
     "IFSC": "LOW",
-    "LOCATION": "LOW"
+    "LOCATION": "LOW",
+    "PER": "MEDIUM",
+    "ORG": "LOW"
 }
 
 CONFIDENCE = {
-    "REGEX": 0.90
+    "REGEX": 0.90,
+    "BERT": 0.85
 }
 
 def extract_pii(text: str) -> Dict:
@@ -37,7 +46,28 @@ def extract_pii(text: str) -> Dict:
     
     processed_text = preprocess_for_ner(text)
 
-    for pii_type, pattern in REGEX_PATTERNS.items():
+    # 1. BERT Token Classification (Transformer NER)
+    if ner_pipeline:
+        try:
+            bert_results = ner_pipeline(processed_text)
+            for entity in bert_results:
+                label = entity.get("entity_group")
+                # Map standard BERT tags (PER, ORG, LOC)
+                if label in ["PER", "ORG", "LOC"]:
+                    mapped_label = "LOCATION" if label == "LOC" else label
+                    violations.append({
+                        "type": mapped_label,
+                        "text": entity.get("word", ""),
+                        "start": entity.get("start", 0),
+                        "end": entity.get("end", 0),
+                        "source": "BERT",
+                        "confidence": float(entity.get("score", CONFIDENCE["BERT"])),
+                        "severity": SEVERITY_MAP.get(mapped_label, "LOW")
+                    })
+        except Exception as e:
+            print(f"BERT NER failed: {e}")
+
+    # 2. Regex Deterministic Rules
         for match in re.finditer(pattern, processed_text):
             violations.append({
                 "type": pii_type,
