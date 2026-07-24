@@ -39,6 +39,8 @@ terraform.rc
 # AI/ML
 ai-services/nlp-service/training/training_data.json
 ai-services/nlp-service/model/custom_indian_pii/*
+ai-services/nlp-service/training/
+ai-services/nlp-service/tests/
 
 # OS/IDE
 .DS_Store

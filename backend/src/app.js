@@ -15,7 +15,7 @@ app.use(cors());
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/user-uploads', userUploadRoutes);
-app.use('/api/admin', adminRoutes); // Also register this one as it was likely missing too
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
     res.send('API is running...');
