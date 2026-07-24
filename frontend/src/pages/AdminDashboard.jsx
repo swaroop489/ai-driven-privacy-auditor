@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar';
 import { getSystemStats, getGlobalViolations } from '../services/adminService';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { submitFalsePositiveFeedback } from '../utils/feedbackApi';
 
 const AdminDashboard = () => {
     const { user } = useAuth();
@@ -12,6 +13,15 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [connectionState, setConnectionState] = useState('connecting');
     const streamRef = useRef(null);
+
+    const handleFalsePositive = async (violation) => {
+        try {
+            await submitFalsePositiveFeedback(violation.text || violation.maskedText, []);
+            setViolations(prev => prev.map(v => v._id === violation._id ? { ...v, feedbackSubmitted: true } : v));
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     const applySnapshot = (snapshot) => {
         if (!snapshot) {
@@ -147,6 +157,7 @@ const AdminDashboard = () => {
                                     <th className="px-6 py-4">Severity</th>
                                     <th className="px-6 py-4">Action</th>
                                     <th className="px-6 py-4">Details</th>
+                                    <th className="px-6 py-4">Feedback</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-700">
@@ -174,6 +185,18 @@ const AdminDashboard = () => {
                                         </td>
                                         <td className="px-6 py-4 w-64 truncate" title={v.text}>
                                             {v.maskedText || v.text?.substring(0, 30) + '...'}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {v.feedbackSubmitted ? (
+                                                <span className="text-green-400 text-xs">Logged</span>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => handleFalsePositive(v)}
+                                                    className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs transition-colors"
+                                                >
+                                                    Mark False Positive
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
