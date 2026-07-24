@@ -5,12 +5,16 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const userUploadRoutes = require('./routes/userUploadRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const { apiLimiter } = require('./middlewares/rateLimiter');
 
 const app = express();
 
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+// Apply rate limiting to all requests
+app.use('/api/', apiLimiter);
 
 // Routes
 app.use('/api/users', userRoutes);

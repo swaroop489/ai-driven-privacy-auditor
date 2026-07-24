@@ -14,7 +14,7 @@ s3 = boto3.client('s3')
 OCR_SERVICE_URL = os.environ.get("OCR_SERVICE_URL")
 NLP_SERVICE_URL = os.environ.get("NLP_SERVICE_URL")
 MEDIA_SERVICE_URL = os.environ.get("MEDIA_SERVICE_URL")
-ENABLE_LOCAL_FALLBACK = str(os.environ.get("ENABLE_LOCAL_FALLBACK", "true")).lower() == "true"
+ENABLE_LOCAL_FALLBACK = str(os.environ.get("ENABLE_LOCAL_FALLBACK", "false")).lower() == "true"
 
 _cold_start = True
 
@@ -94,10 +94,25 @@ def _merge_violations(*groups):
 def _extract_pii_fallback(text):
     if not ENABLE_LOCAL_FALLBACK:
         return {}
-
-    from utils.entity_extraction import extract_pii
-
-    return extract_pii(text)
+    
+    import re
+    # Basic failsafe regex if NLP microservice goes down
+    email_pattern = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+    violations = []
+    
+    for match in re.finditer(email_pattern, text):
+        violations.append({
+            "type": "EMAIL",
+            "text": match.group(),
+            "severity": "MEDIUM",
+            "source": "LAMBDA_FALLBACK_REGEX"
+        })
+        
+    return {
+        "has_violation": len(violations) > 0,
+        "violation_count": len(violations),
+        "violations": violations
+    }
 
 
 def _get_uploads_collection():
