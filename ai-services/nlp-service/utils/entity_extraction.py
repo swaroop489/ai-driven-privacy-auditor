@@ -4,6 +4,7 @@ from typing import List, Dict
 from utils.preprocess import preprocess_for_ner
 from utils.response_formatter import format_detection_response
 from utils.llm_extraction import extract_pii_with_llm
+from utils.vector_search import check_document_similarity
 
 try:
     from transformers import pipeline
@@ -46,13 +47,23 @@ def extract_pii(text: str) -> Dict:
     
     processed_text = preprocess_for_ner(text)
 
-    # 1. BERT Token Classification (Transformer NER)
+    sim_result = check_document_similarity(processed_text)
+    if sim_result and sim_result.get("is_confidential"):
+        violations.append({
+            "type": "CONFIDENTIAL_DOCUMENT_LEAK",
+            "text": "[ENTIRE DOCUMENT FLAGGED]",
+            "start": 0,
+            "end": len(processed_text),
+            "source": "VECTOR_SEARCH",
+            "confidence": sim_result["similarity_score"],
+            "severity": "HIGH"
+        })
+
     if ner_pipeline:
         try:
             bert_results = ner_pipeline(processed_text)
             for entity in bert_results:
                 label = entity.get("entity_group")
-                # Map standard BERT tags (PER, ORG, LOC)
                 if label in ["PER", "ORG", "LOC"]:
                     mapped_label = "LOCATION" if label == "LOC" else label
                     violations.append({
@@ -67,7 +78,7 @@ def extract_pii(text: str) -> Dict:
         except Exception as e:
             print(f"BERT NER failed: {e}")
 
-    # 2. Regex Deterministic Rules
+    for pii_type, pattern in REGEX_PATTERNS.items():
         for match in re.finditer(pattern, processed_text):
             violations.append({
                 "type": pii_type,
