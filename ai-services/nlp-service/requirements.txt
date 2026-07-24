@@ -8,3 +8,4 @@ transformers==4.38.2
 torch==2.2.1
 numpy==2.2.6
 pymongo==4.6.2
+faker==24.4.0
