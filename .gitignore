@@ -51,3 +51,4 @@ ai-services/nlp-service/tests/
 scripts/make_admin_docker.js
 scripts/make_admin.js
 docs/
+scripts/
