@@ -17,9 +17,20 @@ const Navbar = () => {
             </div>
 
             <nav className="hidden md:flex gap-8 text-sm font-medium text-slate-600">
-                <a href="/#features" className="hover:text-teal-600 transition-colors">Features</a>
-                <a href="/#how-it-works" className="hover:text-teal-600 transition-colors">How it Works</a>
-                <a href="/#about" className="hover:text-teal-600 transition-colors">About</a>
+                {!user ? (
+                    <>
+                        <a href="/#features" className="hover:text-indigo-600 transition-colors">Features</a>
+                        <a href="/#how-it-works" className="hover:text-indigo-600 transition-colors">How it Works</a>
+                        <a href="/#about" className="hover:text-indigo-600 transition-colors">About</a>
+                    </>
+                ) : (
+                    <>
+                        <button onClick={() => navigate('/dashboard')} className="hover:text-indigo-600 transition-colors font-semibold">User Dashboard</button>
+                        {user.role === 'admin' && (
+                            <button onClick={() => navigate('/admin')} className="hover:text-indigo-600 transition-colors font-semibold">Admin Panel</button>
+                        )}
+                    </>
+                )}
             </nav>
 
             <div className="flex gap-4 items-center">
@@ -37,12 +48,7 @@ const Navbar = () => {
                     </>
                 ) : (
                     <>
-                        <button
-                            onClick={() => navigate(user.role === 'admin' ? '/admin' : '/dashboard')}
-                            className="hidden md:block px-5 py-2 text-sm font-medium bg-gradient-to-r from-teal-500 to-indigo-600 text-white rounded-full hover:shadow-lg hover:shadow-teal-500/25 transition-all transform hover:-translate-y-0.5"
-                        >
-                            {user.role === 'admin' ? 'Admin Panel' : 'Internal System'}
-                        </button>
+                        {/* Removed the extra Dashboard/Admin button since it's now in the nav links */}
 
                         <div className="relative">
                             <button

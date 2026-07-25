@@ -13,7 +13,8 @@ from datetime import datetime
 s3 = boto3.client('s3')
 OCR_SERVICE_URL = os.environ.get("OCR_SERVICE_URL")
 NLP_SERVICE_URL = os.environ.get("NLP_SERVICE_URL")
-ENABLE_LOCAL_FALLBACK = str(os.environ.get("ENABLE_LOCAL_FALLBACK", "true")).lower() == "true"
+MEDIA_SERVICE_URL = os.environ.get("MEDIA_SERVICE_URL")
+ENABLE_LOCAL_FALLBACK = str(os.environ.get("ENABLE_LOCAL_FALLBACK", "false")).lower() == "true"
 
 _cold_start = True
 
@@ -93,10 +94,25 @@ def _merge_violations(*groups):
 def _extract_pii_fallback(text):
     if not ENABLE_LOCAL_FALLBACK:
         return {}
-
-    from utils.entity_extraction import extract_pii
-
-    return extract_pii(text)
+    
+    import re
+    # Basic failsafe regex if NLP microservice goes down
+    email_pattern = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+    violations = []
+    
+    for match in re.finditer(email_pattern, text):
+        violations.append({
+            "type": "EMAIL",
+            "text": match.group(),
+            "severity": "MEDIUM",
+            "source": "LAMBDA_FALLBACK_REGEX"
+        })
+        
+    return {
+        "has_violation": len(violations) > 0,
+        "violation_count": len(violations),
+        "violations": violations
+    }
 
 
 def _get_uploads_collection():
@@ -193,6 +209,29 @@ def _scan_text(bucket, key, content_type, raw_content):
         "processing_time_ms": scan_result.get("processing_time_ms", 0),
     }
 
+def _scan_media(bucket, key, content_type, body_bytes):
+    if not MEDIA_SERVICE_URL:
+        raise RuntimeError("MEDIA_SERVICE_URL is required for media scans")
+        
+    media_result = _post_multipart(
+        MEDIA_SERVICE_URL,
+        body_bytes,
+        filename=key.split("/")[-1] or "upload.mp4",
+        content_type=content_type or "application/octet-stream",
+    )
+    
+    scan_result = media_result.get("privacy_scan", {})
+    return {
+        "source": f"s3://{bucket}/{key}",
+        "content_type": content_type,
+        "has_violation": scan_result.get("has_violation", False),
+        "violation_count": scan_result.get("violation_count", 0),
+        "summary": scan_result.get("summary", {}),
+        "violations": scan_result.get("violations", []),
+        "final_action": scan_result.get("final_action", "ALLOW"),
+        "processing_time_ms": scan_result.get("processing_time_ms", 0),
+    }
+
 def handler(event, context):
     """
     AWS Lambda handler invoked by S3 events.
@@ -229,6 +268,8 @@ def handler(event, context):
             scan_result = _scan_text(bucket, key, content_type, raw_content)
         elif content_type.startswith("image/") or key.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp')):
             scan_result = _scan_image(bucket, key, content_type, body_bytes)
+        elif content_type.startswith("audio/") or content_type.startswith("video/") or key.lower().endswith(('.mp3', '.wav', '.m4a', '.mp4', '.avi', '.mov', '.mkv')):
+            scan_result = _scan_media(bucket, key, content_type, body_bytes)
         else:
             raw_content = body_bytes.decode('utf-8', errors='ignore')
             scan_result = _scan_text(bucket, key, content_type, raw_content)

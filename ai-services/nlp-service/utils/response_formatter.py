@@ -1,34 +1,58 @@
-"""
-response_formatter.py
----------------------
-Formats the PII detection results according to the backend API specification.
-Handles redaction/masking logic for different entity types.
-"""
-
 from typing import List, Dict
+import random
+import string
+from faker import Faker
+
+fake = Faker('en_IN')
+
+def anonymize_pii(text: str, pii_type: str) -> str:
+    if not text:
+        return text
+
+    if pii_type == "PER":
+        return fake.name()
+    elif pii_type == "INDIAN_PHONE":
+        return f"+91 {''.join(random.choices(string.digits, k=10))}"
+    elif pii_type == "EMAIL":
+        return fake.email()
+    elif pii_type == "AADHAR":
+        return f"{random.randint(1000,9999)} {random.randint(1000,9999)} {random.randint(1000,9999)}"
+    elif pii_type == "PAN":
+        letters = "".join(random.choices(string.ascii_uppercase, k=5))
+        digits = "".join(random.choices(string.digits, k=4))
+        last_letter = random.choice(string.ascii_uppercase)
+        return f"{letters}{digits}{last_letter}"
+    elif pii_type == "UPI_ID":
+        name = fake.user_name()
+        bank = random.choice(["okaxis", "okhdfcbank", "oksbi", "paytm", "ybl"])
+        return f"{name}@{bank}"
+    elif pii_type == "IFSC":
+        bank = "".join(random.choices(string.ascii_uppercase, k=4))
+        branch = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        return f"{bank}0{branch}"
+    elif pii_type == "LOCATION":
+        return fake.city()
+    elif pii_type == "ORG":
+        return fake.company()
+        
+    if len(text) > 4:
+        return f"{text[:2]}{'X' * (len(text)-4)}{text[-2:]}"
+    return "X" * len(text)
 
 def mask_pii(text: str, pii_type: str) -> str:
-    """
-    Applies type-specific redaction rules to PII strings.
-    """
     if not text:
         return text
 
     if pii_type == "AADHAR":
-        # Format: 1234 5678 9012 -> XXXX XXXX 9012
         clean = text.replace(" ", "")
         if len(clean) >= 12:
             return f"XXXX XXXX {clean[-4:]}"
         return "XXXX XXXX XXXX"
-        
     elif pii_type == "PAN":
-        # Format: ABCDE1234F -> XXXXX1234X
         if len(text) == 10:
             return f"XXXXX{text[5:9]}X"
         return "XXXXXXXXXX"
-        
     elif pii_type == "INDIAN_PHONE":
-        # Format: +91 9876543210 -> +91 XXXXXX3210
         masked = list(text)
         digits_kept = 0
         digits_masked = 0
@@ -40,9 +64,7 @@ def mask_pii(text: str, pii_type: str) -> str:
                     masked[i] = "X"
                     digits_masked += 1
         return "".join(masked)
-        
     elif pii_type == "EMAIL":
-        # Format: user@gmail.com -> u***r@gmail.com
         parts = text.split("@")
         if len(parts) == 2:
             name, domain = parts
@@ -52,9 +74,7 @@ def mask_pii(text: str, pii_type: str) -> str:
                 masked_name = "*" * len(name)
             return f"{masked_name}@{domain}"
         return "***@***.com"
-
     elif pii_type == "UPI_ID":
-        # Format: rahul123@oksbi -> r***3@oksbi
         parts = text.split("@")
         if len(parts) == 2:
             name, handle = parts
@@ -63,27 +83,18 @@ def mask_pii(text: str, pii_type: str) -> str:
             else:
                 masked_name = "*" * len(name)
             return f"{masked_name}@{handle}"
-        
     elif pii_type in ["VOTER_ID", "PASSPORT_IN", "DL_NUMBER"]:
-        # Show only last 3 chars
         if len(text) > 4:
             return f"{'X' * (len(text)-3)}{text[-3:]}"
-            
     elif pii_type == "IFSC":
         if len(text) == 11:
             return f"{text[:4]}0XXXXXX"
 
-    # Default fallback: redact almost everything
     if len(text) > 4:
         return f"{text[:2]}{'X' * (len(text)-4)}{text[-2:]}"
     return "X" * len(text)
 
 def format_detection_response(unique_violations: List[Dict], processing_time_ms: float) -> Dict:
-    """
-    Builds the final API response object for PII detection.
-    """
-    
-    # Calculate overall risk score/status based on severity
     has_high = any(v.get("severity") == "HIGH" for v in unique_violations)
     has_med = any(v.get("severity") == "MEDIUM" for v in unique_violations)
     
@@ -93,15 +104,14 @@ def format_detection_response(unique_violations: List[Dict], processing_time_ms:
     elif has_med:
         final_action = "WARN"
         
-    # Group by type for summary
     summary = {}
     for v in unique_violations:
         t = v["type"]
         summary[t] = summary.get(t, 0) + 1
 
-    # Add masked values to the violations list
     for v in unique_violations:
         v["masked_text"] = mask_pii(v["text"], v["type"])
+        v["synthetic_text"] = anonymize_pii(v["text"], v["type"])
 
     return {
         "has_violation": len(unique_violations) > 0,

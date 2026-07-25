@@ -4,6 +4,9 @@ import time
 import logging
 
 from routes.detect import router as detect_router
+from routes.feedback import router as feedback_router
+from routes.chat import router as chat_router
+from routes.admin_rag import router as admin_rag_router
 
 # Logging Configuration
 
@@ -49,7 +52,10 @@ async def log_request_time(request: Request, call_next):
     response.headers["X-Process-Time-ms"] = str(duration)
     return response
 
-app.include_router(detect_router, prefix="/nlp", tags=["PII Detection"])
+app.include_router(detect_router, prefix="/api/v1")
+app.include_router(feedback_router, prefix="/api/v1", tags=["PII Detection"])
+app.include_router(chat_router, prefix="/api/v1", tags=["Chat"])
+app.include_router(admin_rag_router, prefix="/api/v1/admin", tags=["Admin RAG"])
 
 @app.get("/health", tags=["Health"])
 def health_check():
